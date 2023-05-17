@@ -1,0 +1,6 @@
+py-cord
+fuzzywuzzy
+python-Levenshtein
+python-dotenv
+requests
+python-dateutil
