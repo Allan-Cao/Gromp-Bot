@@ -1,26 +1,22 @@
+# https://docs.bayesesports.com/docs-data-portal/api/token_reuse/ with modifications
 import os
 import requests
 import json
 from typing import Optional
 from datetime import datetime
 from datetime import timedelta
-
-TOKEN_FILE = "token.json"
-# Temporary for dev
 from dotenv import load_dotenv
+
 load_dotenv()
 
-PWD_ENV = os.environ.get("HEET_PWD")
-USR_ENV = os.environ.get("HEET_USR")
+bayes_username = os.environ.get("BAYES_USERNAME")
+bayes_password = os.environ.get("BAYES_PASSWORD")
+if bayes_username is None or bayes_password is None:
+    raise ValueError("Bayes login is not set.")
+token_file = os.environ.get("TOKEN_FILE", "token.json")
 
-if PWD_ENV == None:
-    print("Bayes password not found")
-    quit()
-if USR_ENV == None:
-    print("Bayes username not found")
-    quit()
 
-def portal_login(username: str, password: str) -> dict:
+def portal_login(username: str, password: str) -> dict | None:
     """Send API request to get an access token using supplied `username` and `password`. Return JSON response, received from the server"""
     url = "https://lolesports-api.bayesesports.com/auth/login"
     headers = {"Content-Type": "application/json"}
@@ -61,12 +57,15 @@ def get_token_from_file(filename) -> Optional[str]:
 
 def get_token() -> str:
     """Get an auth token from the local file or send an API request to login if stored token is too old"""
-    token = get_token_from_file(TOKEN_FILE)
+    token = get_token_from_file(token_file)
     if token is None:
-        username = USR_ENV
-        password = PWD_ENV
-        response_token = portal_login(username, password)
-        store_token(response_token, TOKEN_FILE)
+        # If there is not a saved token or it's too old, we need to re-generate it.
+        response_token = portal_login(bayes_username, bayes_password)
+        if response_token is None:
+            raise ValueError(
+                "An error occured authenticating with the Bayes authentication server."
+            )
+        store_token(response_token, token_file)
         token = response_token["accessToken"]
     return token
 

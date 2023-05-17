@@ -1,4 +1,12 @@
-from bayes_helper import get_tags, get_asset_link, BayesGame, get_matches, get_icons, BayesScrim, get_scrim_games
+from bayes_helper import (
+    get_tags,
+    get_asset_link,
+    BayesGame,
+    get_matches,
+    get_icons,
+    BayesScrim,
+    get_scrim_games,
+)
 import discord
 from discord.ext import commands
 import os
@@ -7,21 +15,21 @@ from fuzzywuzzy import process
 from typing import Optional
 import logging
 from datetime import datetime
+from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO)
-# For Development
-from dotenv import load_dotenv
+
 load_dotenv()
 
-TOKEN = os.environ.get("TOKEN")
-if TOKEN == None:
-    print("Discord token not found")
-    exit(1)
+discord_token = os.environ.get("DISCORD_TOKEN")
+if discord_token is None:
+    raise ValueError("Discord token not set.")
 
 bot = discord.Bot(help_command=commands.MinimalHelpCommand())
 
 TAGS = get_tags()
 ICONS = get_icons()
+
 
 @bot.event
 async def on_ready():
@@ -51,15 +59,16 @@ def create_pages(matches: list[BayesGame] | list[BayesScrim]) -> list:
     for game in matches:
         if game.game_finished and game.rofl_available:
             if isinstance(game, BayesScrim):
-                embed = discord.Embed(
-                    title=game.teams
-                )
-            elif isinstance(game , BayesGame):
+                embed = discord.Embed(title=game.teams)
+            elif isinstance(game, BayesGame):
                 embed = discord.Embed(
                     title=game.teams,
                     description=f"{game.blockName} | {game.subBlockName}",
                 )
-                icon_tag = max([process.extractOne(tag, list(ICONS.keys())) for tag in game.tags], key=lambda x:x[1])
+                icon_tag = max(
+                    [process.extractOne(tag, list(ICONS.keys())) for tag in game.tags],
+                    key=lambda x: x[1],
+                )
                 if icon_tag is not None and icon_tag[1] >= 85:
                     embed.set_thumbnail(url=ICONS[icon_tag[0]])
                 embed.add_field(
@@ -68,15 +77,19 @@ def create_pages(matches: list[BayesGame] | list[BayesScrim]) -> list:
             else:
                 raise TypeError("Game type not supported")
             embed.add_field(name="Lobby Name", value=game.game_name, inline=True)
-            embed.add_field(name="Game time", value=f"<t:{game.local_timestring}:F>", inline=True)
+            embed.add_field(
+                name="Game time", value=f"<t:{game.local_timestring}:F>", inline=True
+            )
 
             embed.add_field(name="Game ID", value=game.game_id)
             embed.set_author(
                 name="Lord Grompulus Kevin Ribbiton of Croaksworth Bot",
                 icon_url="https://static.wikia.nocookie.net/leagueoflegends/images/8/8b/Gromp_Render.png",
             )
-            
-            embed.set_footer(text=f"Generated with data from Bayes Esports by Gromp Bot • {datetime.now().strftime('%b %d %Y • %H:%M')} ")
+
+            embed.set_footer(
+                text=f"Generated with data from Bayes Esports by Gromp Bot • {datetime.now().strftime('%b %d %Y • %H:%M')} "
+            )
             pages.append(
                 Page(
                     embeds=[embed],
@@ -104,7 +117,8 @@ async def match(
         await paginator.respond(ctx.interaction, ephemeral=False)
     else:
         await ctx.respond("No matches were found.")
-    
+
+
 @bot.slash_command(guild_ids=[1074844803310833785, 1044416171736309940])
 async def scrim(ctx, lobby_name: Optional[str], enemy_team: Optional[str]):
     querystring = {}
@@ -118,10 +132,11 @@ async def scrim(ctx, lobby_name: Optional[str], enemy_team: Optional[str]):
         await paginator.respond(ctx.interaction, ephemeral=False)
     else:
         await ctx.respond("No scrims were found.")
-    
+
 
 @bot.slash_command(guild_ids=[1074844803310833785, 1044416171736309940])
 async def download(ctx, game_id: str):
     await ctx.respond(get_asset_link(game_id))
 
-bot.run(TOKEN)
+
+bot.run(discord_token)
