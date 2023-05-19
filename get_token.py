@@ -5,9 +5,11 @@ import json
 from typing import Optional
 from datetime import datetime
 from datetime import timedelta
-from dotenv import load_dotenv
 
-load_dotenv()
+if os.path.exists(".env"):
+    from dotenv import load_dotenv
+
+    load_dotenv()
 
 bayes_username = os.environ.get("BAYES_USERNAME")
 bayes_password = os.environ.get("BAYES_PASSWORD")
