@@ -1,35 +1,97 @@
+
 # Gromp Bot
 
 This is a Discord bot that serves League of Legends Esports replays directly to coaches and players. It uses the Bayes Esports API to retrieve data about tournaments and matches, and provides a simple interface for users to search for and download replays.
 
-## Installation
+## Run Locally
 
-To use this bot, you'll need to have Python **3.10** or higher installed on your system. You'll also need to install the required Python packages by running the following command:
+To use this bot, you'll need to have Python **3.10** or higher installed on your system.
+
+#### Clone the project
+
+```bash
+git clone https://github.com/Allan-Cao/Gromp-Bot.git
+```
+
+#### (Optional) Create a virtual environment
+
+```bash
+py -m virtualenv bot-env
+```
+Activate the newly created environment (Linux)
+```bash
+source /bot-env/bin/activate
+```
+Activate the newly created environment (Windows)
+```bash
+bot-env\bin\activate
+```
+
+#### Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
-    
-## Environment Variables
 
-You'll also need to set the following environment variables. You can do this by renaming .env.example to a file called .env in the root directory of the project and modifying the variables in the file.
 
-`GUILDS_ALLOWED` specifies which servers the bot is allowed to take commands from. This should be a string that has comma-seperated server-IDs.
+#### Environment Variables
+
+You'll need to set the environment variables. You can do this by renaming .env.example to a file called .env in the root directory of the project and modifying the variables in the file.
+
+`GUILDS_ALLOWED` specifies which servers the bot is allowed to take commands from which should be a string that has comma-seperated server-IDs.
 
 [(How to find your server ID)](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-#:~:text=Obtaining%20Server%20IDs%20%2D%20Mobile%20App,ID%20to%20get%20the%20ID.)
-## Usage
 
-To use this bot, you'll need to invite it to your Discord server. You can do this by creating a new Discord application and adding a bot to it, then generating an invite link for the bot.
+#### Start the bot
 
-Once the bot is in your server, you can use the following commands:
+```bash
+python bot.py
+```
 
-- `/tournaments [search]`: Lists the top 10 tournaments, or the top 5 tournaments that match the given search query.
-- `/match [tournament] [team1] [team2]`: Lists the matches for the given tournament and teams.
-- `/scrim [lobby_name] [enemy_team]`: Lists the past 20 scrims for the given lobby name and/or enemy team.
-- `/download [game_id]`: Provides a download link for the replay of the given game ID.
+
+## Building and Deploying with Docker
+
+To build and deploy the project using Docker, follow these steps:
+
+1. Install Docker on your system if you haven't already. You can download Docker from the official website: https://www.docker.com/get-started
+
+2. Clone the project repository to your local machine:
+```bash
+git clone https://github.com/Allan-Cao/Gromp-Bot.git
+```
+
+3. Navigate to the project directory:
+```bash
+cd Gromp-Bot
+```
+You will need to rename `Dockerfile.example` to `Dockerfile` and update the enviroment variables
+
+4. Build the Docker image using the following command:
+```bash
+docker build -t gromp-bot .
+```
+This command will build a Docker image with the name `gromp-bot`.
+
+5. Run the Docker container using the following command:
+```bash
+docker run -d gromp-bot
+```
+
+6. Verify that the container is running using the following command:
+```bash
+docker ps
+```
+
+This command will show a list of running Docker containers. You should see a container with the name `gromp-bot`.
+
+7. To stop the container, use the following command:
+```bash
+docker stop <docker-container-id>
+```
+
+This command will stop the container.
+
+That's it! You've successfully built and deployed the project using Docker. You can now use the bot by inviting it to your Discord server and using its slash commands.
 ## License
 
 This project is licensed under the [MIT](https://choosealicense.com/licenses/mit/) License. See the LICENSE file for more information.
-## Credits
-
-This bot was created by Allan Cao and uses the Bayes Esports API to retrieve data about tournaments, matches and replays.
