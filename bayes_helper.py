@@ -28,7 +28,7 @@ class BayesGame:
     @property
     def game_finished(self) -> bool:
         return self.status in ["FINISHED", "ENDED"]
-    
+
     @property
     def rofl_available(self) -> bool:
         return any(asset in ["ROFL_REPLAY", "SCRIM_REPLAY"] for asset in self.assets)
@@ -37,10 +37,10 @@ class BayesGame:
     def teams(self) -> str:
         return f"{self.team1_code} vs {self.team2_code}"
 
-
     @property
     def local_timestring(self) -> int:
         return int(isoparse(self.createdAt).timestamp())
+
 
 class BayesScrim(BayesGame):
     def __init__(self, game):
@@ -48,9 +48,12 @@ class BayesScrim(BayesGame):
         self.status = game.get("status")
         self.game_id = game.get("id")
         self.team1_code = game["teams"][0]["code"]
-        self.team2_code = game["teams"][1]["code"] if len(game["teams"]) > 1 else "Unknown"
+        self.team2_code = (
+            game["teams"][1]["code"] if len(game["teams"]) > 1 else "Unknown"
+        )
         self.assets = ["SCRIM_REPLAY"] if game["replayAvailable"] else []
         self.game_name = game["name"]
+
 
 def get_matches(querystring: Optional[dict]) -> list:
     token = get_token()
@@ -74,7 +77,9 @@ def get_icons() -> dict:
             headers={"Authorization": f"Bearer {token}"},
         )
         response.raise_for_status()
-        return {tournament["name"]: tournament["logoUrl"] for tournament in response.json()}
+        return {
+            tournament["name"]: tournament["logoUrl"] for tournament in response.json()
+        }
     except (requests.exceptions.RequestException, ValueError):
         return {}
 
@@ -99,7 +104,9 @@ def get_scrim_games(querystring: Optional[dict]) -> list:
     return response.json()["games"] if response.ok else []
 
 
-def get_asset(game_id: int | str, asset_type: Optional[str] = "ROFL_REPLAY") -> Optional[str]:
+def get_asset(
+    game_id: int | str, asset_type: Optional[str] = "ROFL_REPLAY"
+) -> Optional[str]:
     token = get_token()
     querystring = {}
     if asset_type == "SCRIM_REPLAY":
@@ -107,7 +114,9 @@ def get_asset(game_id: int | str, asset_type: Optional[str] = "ROFL_REPLAY") -> 
     else:
         querystring.update({"gameId": game_id, "type": asset_type})
         url = f"https://lolesports-api.bayesesports.com/emh/v1/games/{game_id}/download"
-    response = requests.get(url, headers={"Authorization": f"Bearer {token}"}, params=querystring)
+    response = requests.get(
+        url, headers={"Authorization": f"Bearer {token}"}, params=querystring
+    )
     return response.json()["url"] if response.ok else None
 
 
