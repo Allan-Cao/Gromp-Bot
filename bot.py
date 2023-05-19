@@ -15,7 +15,6 @@ from fuzzywuzzy import process
 from typing import Optional
 import logging
 from datetime import datetime
-from dotenv import load_dotenv
 
 logging.basicConfig(
     level=logging.INFO,
@@ -26,7 +25,10 @@ logging.basicConfig(
     ],
 )
 
-load_dotenv()
+if os.path.exists(".env"):
+    from dotenv import load_dotenv
+
+    load_dotenv()
 
 discord_token = os.environ.get("DISCORD_TOKEN")
 if discord_token is None:
