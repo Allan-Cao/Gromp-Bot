@@ -1,5 +1,7 @@
 .env
 bot-env/
+Dockerfile
+.vscode/
 token.json
 
 # Byte-compiled / optimized / DLL files
