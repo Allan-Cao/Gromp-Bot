@@ -4,7 +4,7 @@ This is a Discord bot that serves League of Legends Esports replays directly to 
 
 ## Installation
 
-To use this bot, you'll need to have Python **3.10** or higher installed on your system due to the use of | for checking types. You'll also need to install the required Python packages by running the following command:
+To use this bot, you'll need to have Python **3.10** or higher installed on your system. You'll also need to install the required Python packages by running the following command:
 
 ```bash
 pip install -r requirements.txt
