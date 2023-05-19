@@ -1,5 +1,5 @@
-# Use an official Python 3.10 runtime as a parent image
-FROM python:3.10-alpine
+# Use an official Python 3.11 runtime as a parent image
+FROM python:3.11-alpine
 
 # Install Git
 RUN apk update && apk add git
