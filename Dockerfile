@@ -13,12 +13,5 @@ RUN git clone https://github.com/Allan-Cao/Gromp-Bot.git .
 # Install any needed packages specified in requirements.txt
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
-# Set the environment variables
-ENV DISCORD_TOKEN=DiscordToken
-ENV BAYES_USERNAME=bayes@email.com
-ENV BAYES_PASSWORD=bayesPassword
-ENV TOKEN_FILE=token.json
-ENV GUILDS_ALLOWED=guild1,guild2,guild3
-
 # Run the command to start the bot
 CMD ["python", "bot.py"]
