@@ -36,7 +36,7 @@ pip install -r requirements.txt
 
 #### Environment Variables
 
-You'll need to set the environment variables. You can do this by renaming .env.example to a file called .env in the root directory of the project and modifying the variables in the file.
+You'll need to set the environment variables. You can do this by renaming .env.example to a file called .env in the root directory of the project and modifying the variables in the file or if you are deploying with docker, consider passing in env variables with the `--env-file` option.
 
 `GUILDS_ALLOWED` specifies which servers the bot is allowed to take commands from which should be a string that has comma-seperated server-IDs.
 
@@ -64,7 +64,6 @@ git clone https://github.com/Allan-Cao/Gromp-Bot.git
 ```bash
 cd Gromp-Bot
 ```
-You will need to rename `Dockerfile.example` to `Dockerfile` and update the enviroment variables
 
 4. Build the Docker image using the following command:
 ```bash
