@@ -6,6 +6,7 @@ from typing import Optional
 from datetime import datetime
 from datetime import timedelta
 
+# TODO: Move this login stuff to not this file...
 if os.path.exists(".env"):
     from dotenv import load_dotenv
 
@@ -20,7 +21,7 @@ token_file = os.environ.get("TOKEN_FILE", "token.json")
 
 def portal_login(username: str, password: str) -> dict | None:
     """Send API request to get an access token using supplied `username` and `password`. Return JSON response, received from the server"""
-    url = "https://lolesports-api.bayesesports.com/auth/login"
+    url = "https://lolesports-api.bayesesports.com/v2/auth/login"
     headers = {"Content-Type": "application/json"}
     creds = {"username": username, "password": password}
     response = requests.post(url, json=creds, headers=headers)
