@@ -2,6 +2,7 @@ from bayes_helper import (
     get_tags,
     BayesGame,
     BayesGameType,
+    BayesMatch,
     get_asset_url,
     BayesAssetType,
     get_team_names,
@@ -64,17 +65,10 @@ class DownloadButton(discord.ui.Button):
         await interaction.response.send_message(asset_link)
 
 
-def create_pages(
-    games: list[BayesGame], games_found, total_pages, current_page
-) -> list:
+def create_pages(games: BayesMatch) -> list:
     # Non-programmers won't understand the difference between 0 and 1 indexing... so we lie to them
-    page_string = (
-        None
-        if total_pages == 1
-        else f"Page {current_page + 1}/{total_pages - 1} ({games_found} games found)"
-    )
     pages = []
-    for game in games:
+    for game in games.games:
         if game.game_finished and game.rofl_available:
             if game.league is None or game.tournament is None:
                 embed = discord.Embed(title=game.team_string)
@@ -98,8 +92,7 @@ def create_pages(
             embed.add_field(name="Patch", value=game.patch or "unknown")
 
             embed.add_field(name="Game ID", value=game.platform_id or "ERROR")
-            if page_string is not None:
-                embed.add_field(name="Page", value=page_string)
+            embed.add_field(name="Page", value=games.page_string)
 
             # This stuff should not be hard coded but it's fine for now...
             embed.set_author(
@@ -178,19 +171,15 @@ async def match(
         "page": page,
     }
     games = get_matches(querystring)
-    if games is None or games.get("totalCount" == 0):
-        await ctx.respond("No matches found")
+    if games is None or not games.games_available:
+        await ctx.respond("No matches found. Check your parameters and try again.")
         return
-    games_found = games.get("totalCount")
-    total_pages = games.get("totalPages")
-    current_page = games.get("pageNumber")
 
-    pages = create_pages(
-        [BayesGame(game) for game in games["items"]],
-        games_found,
-        total_pages,
-        current_page,
-    )
+    pages = create_pages(games)
+    if pages is None:
+        await ctx.respond("No replays available. Please try again later.")
+        return
+    
     view = discord.ui.View(timeout=None)
     view.add_item(DownloadButton())
     paginator = Paginator(pages=pages, custom_view=view)
