@@ -151,20 +151,6 @@ def get_matches(querystring) -> Optional[BayesMatch]:
     except (requests.exceptions.RequestException, ValueError):
         return None
 
-def get_icons() -> dict:
-    token = get_token()
-    try:
-        response = requests.get(
-            "https://lolesports-api.bayesesports.com/historic/v1/riot-lol/leagues",
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        response.raise_for_status()
-        return {
-            tournament["name"]: tournament["logoUrl"] for tournament in response.json()
-        }
-    except (requests.exceptions.RequestException, ValueError):
-        return {}
-
 def get_team_names(possible_team_name: discord.AutocompleteContext) -> list[str]:
     token = get_token()
     response = requests.get(
@@ -172,11 +158,3 @@ def get_team_names(possible_team_name: discord.AutocompleteContext) -> list[str]
         headers={"Authorization": f"Bearer {token}"},
     )
     return [_.get("name") for _ in response.json()] if response.ok else []
-
-def get_tags() -> list[str]:
-    token = get_token()
-    response = requests.get(
-        "https://lolesports-api.bayesesports.com/emh/v1/tags",
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    return response.json() if response.ok else []
