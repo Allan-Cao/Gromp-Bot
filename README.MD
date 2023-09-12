@@ -1,11 +1,25 @@
 
 # Gromp Bot
 
-This is a Discord bot that serves League of Legends Esports replays directly to coaches and players. It uses the Bayes Esports API to retrieve data about tournaments and matches, and provides a simple interface for users to search for and download replays.
+Gromp Bot is a specialized Discord bot designed to deliver League of Legends Esports replays directly to coaches and players. Leveraging the Bayes Esports API, the bot offers a user-friendly interface to search, filter, and download match replays right in discord.
 
-## Run Locally
+---
 
-To use this bot, you'll need to have Python **3.10** or higher installed on your system.
+## Features
+
+- **Search Replays**: Filter by game type, team name, and tags.
+- **Download Replays**: Direct download links for replays.
+- **User-Friendly**: Designed for coaches and players to use with minimal setup.
+- **Highly Configurable**: Limit bot to specific Discord guilds.
+
+---
+
+## Prerequisites
+
+- Python 3.10 or higher
+- Docker (Optional for deployment)
+
+---
 
 #### Clone the project
 
@@ -13,19 +27,25 @@ To use this bot, you'll need to have Python **3.10** or higher installed on your
 git clone https://github.com/Allan-Cao/Gromp-Bot.git
 ```
 
+---
+
 #### (Optional) Create a virtual environment
 
-```bash
-py -m virtualenv bot-env
-```
-Activate the newly created environment (Linux)
-```bash
-source /bot-env/bin/activate
-```
-Activate the newly created environment (Windows)
-```bash
-bot-env\bin\activate
-```
+- **Linux/MacOS**
+
+  ```bash
+  python3 -m venv bot-env
+  source bot-env/bin/activate
+  ```
+
+- **Windows**
+
+  ```bash
+  py -m venv bot-env
+  bot-env\Scripts\activate
+  ```
+
+---
 
 #### Install dependencies
 
@@ -34,13 +54,17 @@ pip install -r requirements.txt
 ```
 
 
+---
+
 #### Environment Variables
 
 You'll need to set the environment variables. You can do this by renaming .env.example to a file called .env in the root directory of the project and modifying the variables in the file or if you are deploying with docker, consider passing in env variables with the `--env-file` option.
 
 `GUILDS_ALLOWED` specifies which servers the bot is allowed to take commands from which should be a string that has comma-seperated server-IDs.
 
-[(How to find your server ID)](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-#:~:text=Obtaining%20Server%20IDs%20%2D%20Mobile%20App,ID%20to%20get%20the%20ID.)
+> **Note**: To find your server ID, follow [this guide](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-).
+
+---
 
 #### Start the bot
 
@@ -48,49 +72,28 @@ You'll need to set the environment variables. You can do this by renaming .env.e
 python bot.py
 ```
 
+---
 
 ## Building and Deploying with Docker
 
-To build and deploy the project using Docker, follow these steps:
+1. **Install Docker**: [Official Website](https://www.docker.com/get-started)
+2. **Clone Repository**: `git clone https://github.com/Allan-Cao/Gromp-Bot.git`
+3. **Navigate to Directory**: `cd Gromp-Bot`
+4. **Build Image**: `docker build -t gromp-bot .`
+5. **Run Container**: `docker run -d gromp-bot`
+6. **Verify Container**: `docker ps`
 
-1. Install Docker on your system if you haven't already. You can download Docker from the official website: https://www.docker.com/get-started
+**Stop Container**: `docker stop <container-id>`
 
-2. Clone the project repository to your local machine:
-```bash
-git clone https://github.com/Allan-Cao/Gromp-Bot.git
-```
+---
 
-3. Navigate to the project directory:
-```bash
-cd Gromp-Bot
-```
+## Usage
 
-4. Build the Docker image using the following command:
-```bash
-docker build -t gromp-bot .
-```
-This command will build a Docker image with the name `gromp-bot`.
+- **Search Matches**: `/match`
+- **Download Replay**: `/download <game_id>`
 
-5. Run the Docker container using the following command:
-```bash
-docker run -d gromp-bot
-```
+---
 
-6. Verify that the container is running using the following command:
-```bash
-docker ps
-```
-
-This command will show a list of running Docker containers. You should see a container with the name `gromp-bot`.
-
-7. To stop the container, use the following command:
-```bash
-docker stop <docker-container-id>
-```
-
-This command will stop the container.
-
-That's it! You've successfully built and deployed the project using Docker. You can now use the bot by inviting it to your Discord server and using its slash commands.
 ## License
 
 This project is licensed under the [MIT](https://choosealicense.com/licenses/mit/) License. See the LICENSE file for more information.
