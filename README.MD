@@ -4,6 +4,8 @@
 Gromp Bot is a specialized Discord bot designed to deliver League of Legends Esports replays directly to coaches and players. Leveraging the Bayes Esports API, the bot offers a user-friendly interface to search, filter, and download match replays right in discord.
 
 ---
+![Example Usage Image](example-usage.png)
+---
 
 ## Features
 
