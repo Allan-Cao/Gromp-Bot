@@ -1,5 +1,6 @@
-py-cord
-fuzzywuzzy
-python-dotenv
 requests
 python-dateutil
+disnake
+python-dotenv
+fuzzywuzzy
+python-Levenshtein

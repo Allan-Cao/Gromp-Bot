@@ -1,5 +1,5 @@
+from typing import List, Optional
 from bayes_helper import (
-    get_tags,
     BayesGame,
     BayesGameType,
     BayesMatch,
@@ -7,18 +7,18 @@ from bayes_helper import (
     BayesAssetType,
     get_team_names,
     get_matches,
-    get_icons,
+    get_all_tags,
 )
-import discord
-from discord.ext import commands
-from discord.commands import option
+
 import os
-from discord.ext.pages import Paginator, Page
-from fuzzywuzzy import process
 import logging
 from datetime import datetime
+from fuzzywuzzy import process
+import disnake
+from disnake.ext import commands
+from disnake import Option
 
-# TODO Add actual logging to help with future debugging
+# Logging configuration
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -27,168 +27,192 @@ logging.basicConfig(
     ],
 )
 
+# Load environment variables
 if os.path.exists(".env"):
     from dotenv import load_dotenv
 
     load_dotenv()
 
 discord_token = os.environ.get("DISCORD_TOKEN")
-if discord_token is None:
-    raise ValueError("Discord token not set.")
 guilds_allowed = os.environ.get("GUILDS_ALLOWED")
 if guilds_allowed is None:
     guild_ids = []
 else:
     guild_ids = list(map(int, guilds_allowed.split(",")))
+tags = get_all_tags()
 
-bot = discord.Bot(help_command=commands.MinimalHelpCommand())
-
-TAGS = get_tags()
-ICONS = get_icons()
+# Bot initialization
+bot = commands.InteractionBot(test_guilds=guild_ids)
 
 
-class DownloadButton(discord.ui.Button):
-    def __init__(self, *args, **kwargs):
-        super().__init__(label="Download Replay", *args, **kwargs)
+class SeriesViewer(disnake.ui.View):
+    def __init__(self, embeds: List[disnake.Embed]):
+        super().__init__(timeout=None)
+        self.embeds = embeds
+        self.index = 0
 
-    async def callback(self, interaction: discord.Interaction):
-        current_embed = interaction.message.embeds[0] # type: ignore
+        # Sets the footer of the embeds with their respective page numbers.
+        for i, embed in enumerate(self.embeds):
+            embed.set_footer(text=f"Game {i + 1} of {len(self.embeds)}")
+
+        self._update_state()
+
+    def _update_state(self) -> None:
+        self.first_page.disabled = self.prev_page.disabled = self.index == 0
+        self.last_page.disabled = self.next_page.disabled = (
+            self.index == len(self.embeds) - 1
+        )
+
+    @disnake.ui.button(emoji="⏪", style=disnake.ButtonStyle.blurple)
+    async def first_page(
+        self, button: disnake.ui.Button, inter: disnake.MessageInteraction
+    ):
+        self.index = 0
+        self._update_state()
+
+        await inter.response.edit_message(embed=self.embeds[self.index], view=self)
+
+    @disnake.ui.button(emoji="◀", style=disnake.ButtonStyle.secondary)
+    async def prev_page(
+        self, button: disnake.ui.Button, inter: disnake.MessageInteraction
+    ):
+        self.index -= 1
+        self._update_state()
+
+        await inter.response.edit_message(embed=self.embeds[self.index], view=self)
+
+    @disnake.ui.button(emoji="▶", style=disnake.ButtonStyle.secondary)
+    async def next_page(
+        self, button: disnake.ui.Button, inter: disnake.MessageInteraction
+    ):
+        self.index += 1
+        self._update_state()
+
+        await inter.response.edit_message(embed=self.embeds[self.index], view=self)
+
+    @disnake.ui.button(emoji="⏩", style=disnake.ButtonStyle.blurple)
+    async def last_page(
+        self, button: disnake.ui.Button, inter: disnake.MessageInteraction
+    ):
+        self.index = len(self.embeds) - 1
+        self._update_state()
+
+        await inter.response.edit_message(embed=self.embeds[self.index], view=self)
+
+    @disnake.ui.button(emoji="🔽", style=disnake.ButtonStyle.green)
+    async def download(
+        self, button: disnake.ui.Button, inter: disnake.MessageInteraction
+    ):
+        current_embed = self.embeds[self.index]
         game_id = next(
-            (page.value for page in current_embed.fields if page.name == "Game ID"),
+            (field.value for field in current_embed.fields if field.name == "Game ID"),
             None,
         )
         if game_id is None:
-            return await interaction.response.send_message(
-                "Unable to find the game ID."
-            )
+            return await inter.response.send_message("Unable to find the game ID.")
         asset_link = get_asset_url(game_id, BayesAssetType.ROFL_REPLAY)
-        await interaction.response.send_message(asset_link)
+        await inter.response.send_message(asset_link)
 
 
+# Create pages function
 def create_pages(games: BayesMatch) -> list:
-    # Non-programmers won't understand the difference between 0 and 1 indexing... so we lie to them
     pages = []
     for game in games.games:
         if game.game_finished and game.rofl_available:
             if game.league is None or game.tournament is None:
-                embed = discord.Embed(title=game.team_string)
+                embed = disnake.Embed(title=game.team_string)
             else:
-                embed = discord.Embed(
+                embed = disnake.Embed(
                     title=game.team_string,
                     description=f"{game.league} | {game.tournament}",
                 )
-            # Unknown if the V2 API will support this...
-            # icon_tag = max(
-            #     [process.extractOne(tag, list(ICONS.keys())) for tag in game.tags],
-            #     key=lambda x: x[1],
-            # )
-            # if icon_tag is not None and icon_tag[1] >= 85:
-            #     embed.set_thumbnail(url=ICONS[icon_tag[0]])
-            # embed.add_field(
-            #     name="Tournament", value=max(game.tags, key=len), inline=False
-            # )
             embed.add_field(name="Lobby Name", value=game.game_name or "-")
             embed.add_field(name="Start Time", value=f"<t:{game.started_at}:F>")
             embed.add_field(name="Patch", value=game.patch or "unknown")
-
             embed.add_field(name="Game ID", value=game.platform_id or "ERROR")
             embed.add_field(name="Page", value=games.page_string)
 
-            # This stuff should not be hard coded but it's fine for now...
             embed.set_author(
                 name="Lord Grompulus Kevin Ribbiton of Croaksworth Bot",
                 icon_url="https://static.wikia.nocookie.net/leagueoflegends/images/8/8b/Gromp_Render.png",
             )
-
             embed.set_footer(
                 text=f"Generated with data from Bayes Esports by Gromp Bot • {datetime.now().strftime('%b %d %Y • %H:%M')} "
             )
-
-            pages.append(
-                Page(
-                    embeds=[embed],
-                )
-            )
+            pages.append(embed)
     return pages
 
 
+def get_tag_filter(inter, filter_tag: str) -> list:
+    return [tag for tag, confidence in process.extract(filter_tag, tags, limit=25)]
+
+
+# Event listener
 @bot.event
 async def on_ready():
     await bot.change_presence(
-        status=discord.Status.online,
-        activity=discord.Game("with data"),
+        status=disnake.Status.online,
+        activity=disnake.Game("with data"),
     )
     logging.info(f"We have logged in as {bot.user}")
     print(f"We have logged in as {bot.user}")
 
 
-# @bot.slash_command(guild_ids=guild_ids)
-# async def tournaments(ctx, search: Optional[str]):
-#     if search is None:
-#         tags = TAGS[:10]
-#     else:
-#         possible_tags = process.extract(search, TAGS, limit=5)
-#         tags = (
-#             [tournament[0] for tournament in possible_tags]
-#             if possible_tags
-#             else ["No matching Tournaments were found"]
-#         )
-#     await ctx.respond("\n".join(tags))
-
-
+# Slash command for matches
 @bot.slash_command(guild_ids=guild_ids)
-@option(
-    "game_type",
-    description="Game Type (Esports match or Scrim)",
-    choices=[BayesGameType.SCRIM, BayesGameType.ESPORTS],
-    default=BayesGameType.ESPORTS,
-)
-@option(
-    "team_name",
-    description="Team name (will autocomplete). For scrims this is enemy team",
-    autocomplete=get_team_names,
-    required=False,
-)
-@option("tags", description="Tags to filter by: e.g. NACL Summer 2023", required=False)
-@option(
-    "number_of_games", description="Number of games to return (max 100)", required=False
-)
-@option("page", description="Page number (defaults to the first page)", required=False)
 async def match(
-    ctx,
-    game_type: BayesGameType,
-    team_name: str,
-    tags: str,
-    number_of_games: int = 10,
-    page: int = 0,
+    inter,
+    game_type: BayesGameType = commands.Param(
+        default=BayesGameType.ESPORTS.value, description="Game Type to filter by."
+    ),
+    team_name: str = commands.Param(
+        default=None,
+        description="Team name to filter by. For scrims this is the enemy team's name.",
+        autocomplete=get_team_names,
+    ),
+    tags: str = commands.Param(
+        default=None,
+        description="Tournament/tag to filter by",
+        autocomplete=get_tag_filter,
+    ),
+    number_of_games: int = commands.Param(
+        default=25,
+        description="Number of games to return (max 100)",
+    ),
+    page: int = commands.Param(default=1, description="Page number"),
 ):
     querystring = {
-        "page": 0,
-        "type": game_type.value,
-        "tags": tags,
-        "teamName": team_name,
+        "types": game_type,
         "size": number_of_games,
-        "page": page,
+        "page": page - 1,
     }
+    if team_name:
+        querystring["teamName"] = team_name
+    if tags:
+        querystring["tags"] = [tags]
+    print(querystring)
     games = get_matches(querystring)
     if games is None or not games.games_available:
-        await ctx.respond("No matches found. Check your parameters and try again.")
+        await inter.response.send_message(
+            "No matches found. Check your parameters and try again."
+        )
         return
 
     pages = create_pages(games)
-    if pages is None:
-        await ctx.respond("No replays available. Please try again later.")
+    if not pages:
+        await inter.response.send_message(
+            "No replays available. Please try again later."
+        )
         return
-    
-    view = discord.ui.View(timeout=None)
-    view.add_item(DownloadButton())
-    paginator = Paginator(pages=pages, custom_view=view)
-    await paginator.respond(ctx.interaction)
+
+    await inter.response.send_message(embed=pages[0], view=SeriesViewer(pages))
 
 
+# Slash command for downloading
 @bot.slash_command(guild_ids=guild_ids)
 async def download(ctx, game_id: str):
     await ctx.respond(get_asset_url(game_id, BayesAssetType.ROFL_REPLAY))
 
 
+# Run the bot
 bot.run(discord_token)

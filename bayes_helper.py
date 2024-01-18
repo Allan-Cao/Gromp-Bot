@@ -136,25 +136,35 @@ def get_asset_url(platform_id: str, asset_type: BayesAssetType) -> Optional[str]
     response = requests.get(
         url, headers={"Authorization": f"Bearer {token}"}
     )
+    response.raise_for_status()
     return response.json()["url"] if response.ok else None
 
 def get_matches(querystring) -> Optional[BayesMatch]:
     token = get_token()
-    try:
-        response = requests.get(
-            "https://lolesports-api.bayesesports.com/v2/games",
-            headers={"Authorization": f"Bearer {token}"},
-            params=querystring,
-        )
-        response.raise_for_status()
-        return BayesMatch(response.json())
-    except (requests.exceptions.RequestException, ValueError):
-        return None
 
-def get_team_names(possible_team_name: discord.AutocompleteContext) -> list[str]:
+    response = requests.get(
+        "https://lolesports-api.bayesesports.com/v2/games",
+        headers={"Authorization": f"Bearer {token}"},
+        params=querystring,
+    )
+    print(response.status_code)
+    response.raise_for_status()
+    return BayesMatch(response.json()) if response.ok else None
+
+def get_team_names(inter, possible_team_name: str) -> list[str]:
     token = get_token()
     response = requests.get(
-        f"https://lolesports-api.bayesesports.com/v2/games/teams/suggestions?name={possible_team_name.value}",
+        f"https://lolesports-api.bayesesports.com/v2/games/teams/suggestions?name={possible_team_name}",
         headers={"Authorization": f"Bearer {token}"},
     )
     return [_.get("name") for _ in response.json()] if response.ok else []
+
+def get_all_tags() -> list[str]:
+    token = get_token()
+    response = requests.get(
+        f"https://lolesports-api.bayesesports.com/v2/tags",
+        headers={"Authorization": f"Bearer {token}"},
+        params={"type": "ESPORTS"},
+    )
+    
+    return response.json() if response.ok else []
